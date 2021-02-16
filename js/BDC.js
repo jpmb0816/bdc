@@ -16,8 +16,9 @@ class BDC {
         this.frameTime = 1000 / this.targetFPS;
         this.interval = undefined;
         this.scene = new BDC.Scene2(320, 320, true);
-        this.keyboard = new BDC.KeyboardListener(window);
+        this.keyboard = new BDC.KeyboardListener(this.scene.canvas);
         this.mouse = new BDC.MouseListener(this.scene.canvas);
+        this.scene.canvas.focus();
     }
 
     start() {
@@ -115,6 +116,7 @@ BDC.Scene2 = class {
         this.setWidth(width);
         this.setHeight(height);
         this.context.scale(2, 2);
+        this.canvas.tabIndex = 1;
 
         if (isAppendToBody) {
             document.body.appendChild(this.canvas);
@@ -160,7 +162,7 @@ BDC.Color = class {
 BDC.KeyboardListener = class {
     constructor(object) {
         this.object = object;
-        this.data = { type: '', code: -1 };
+        this.data = undefined;
         this.eventType = ['keydown', 'keyup'];
 
         this.object.addEventListener(this.eventType[0], this.eventLogger.bind(this));
@@ -168,19 +170,17 @@ BDC.KeyboardListener = class {
     }
 
     eventLogger(event) {
-        this.data.type = event.type;
-        this.data.code = event.keyCode;
-    }
+        const data = {};
 
-    resetData() {
-        this.data.type = '';
-        this.data.code = -1;
+        data.type = event.type;
+        data.code = event.keyCode;
+
+        this.data = data;
     }
 
     getData() {
-        const data = JSON.parse(JSON.stringify(this.data));
-        this.resetData();
-
+        const data = this.data;
+        this.data = undefined;
         return data;
     }
 }
@@ -188,7 +188,7 @@ BDC.KeyboardListener = class {
 BDC.MouseListener = class {
     constructor(object) {
         this.object = object;
-        this.data = { type: '', code: -1, x: -1, y: -1, cx: -1, cy: -1 };
+        this.data = undefined;
         this.isMobile = BDC.isMobile();
         this.eventType = this.isMobile ? ['touchstart', 'touchend', 'touchmove'] : ['mousedown', 'mouseup', 'mousemove'];
 
@@ -199,48 +199,32 @@ BDC.MouseListener = class {
 
     eventLogger(event) {
         const rect = this.object.getBoundingClientRect();
-        let x, y;
+        const data = {};
+
+        data.type = event.type;
+        data.code = event.code;
 
         if (this.isMobile) {
             if (event.type === this.eventType[1]) {
-                x = Math.round(event.changedTouches[0].clientX - rect.left);
-                y = Math.round(event.changedTouches[0].clientY - rect.top);
+                data.x = Math.round(event.changedTouches[0].clientX - rect.left);
+                data.y = Math.round(event.changedTouches[0].clientY - rect.top);
             }
             else {
-                x = Math.round(event.touches[0].clientX - rect.left);
-                y = Math.round(event.touches[0].clientY - rect.top);
+                data.x = Math.round(event.touches[0].clientX - rect.left);
+                data.y = Math.round(event.touches[0].clientY - rect.top);
             }
         }
         else {
-            x = Math.round(event.clientX - rect.left);
-            y = Math.round(event.clientY - rect.top);
+            data.x = Math.round(event.clientX - rect.left);
+            data.y = Math.round(event.clientY - rect.top);
         }
 
-
-        this.data.code = event.code;
-
-        if (event.type === this.eventType[2]) {
-            this.data.cx = x;
-            this.data.cy = y;
-        }
-        else {
-            this.data.x = x;
-            this.data.y = y;
-            this.data.type = event.type;
-        }
-    }
-
-    resetData() {
-        if (this.data.type === this.eventType[1]) {
-            this.data.type = '';
-            this.data.code = -1;
-        }
+        this.data = data;
     }
 
     getData() {
-        const data = JSON.parse(JSON.stringify(this.data));
-        this.resetData();
-
+        const data = this.data;
+        this.data = undefined;
         return data;
     }
 }

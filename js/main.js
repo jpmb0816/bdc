@@ -4,11 +4,11 @@ class Main extends BDC {
     }
 
     getInput(keyboard, mouse) {
-        if (keyboard.type !== '') {
+        if (keyboard) {
             console.log(keyboard.type);
         }
 
-        if (mouse.type !== '') {
+        if (mouse) {
             console.log(mouse.type);
         }
     }
