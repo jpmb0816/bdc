@@ -1,3 +1,4 @@
+// BDC Game Engine
 class BDC {
     constructor() {
         this.lastTime = BDC.getCurrentTimeMillis();
@@ -105,60 +106,45 @@ class BDC {
     static isMobile() {
         return (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
     }
-}
 
-BDC.Scene2 = class {
-    constructor(width, height, isAppendToBody = false) {
-        this.canvas = document.createElement('canvas');
-        this.context = this.canvas.getContext('2d');
-        this.width = 0;
-        this.height = 0;
-        this.setWidth(width);
-        this.setHeight(height);
-        this.context.scale(2, 2);
-        this.canvas.tabIndex = 1;
-
-        if (isAppendToBody) {
-            document.body.appendChild(this.canvas);
+    static random(min, max) {
+        if (typeof max === 'undefined') {
+            max = min;
+            min = 0;
         }
+
+        return Math.random() * (max - min) + min;
     }
 
-    setWidth(width) {
-        this.width = width;
-        this.canvas.width = width * 2;
-        this.canvas.style.width = width + 'px';
+    static clamp(val, min, max) {
+        if (val < min) {
+            return min;
+        }
+        else if (val > max) {
+            return max;
+        }
+
+        return val;
     }
 
-    setHeight(height) {
-        this.height = height;
-        this.canvas.height = height * 2;
-        this.canvas.style.height = height + 'px';
+    static radians(degree) {
+        return degree * Math.PI / 180;
     }
 
-    clearScene(color) {
-        if (typeof color === 'undefined') {
-            this.context.clearRect(0, 0, this.width, this.height);
+    static fromAngle(angle, length) {
+        if (typeof length === 'undefined') {
+            length = 1;
         }
-        else {
-            this.context.fillStyle = color;
-            this.context.fillRect(0, 0, this.width, this.height);
-        }
+
+        return new BDC.Vector(length * Math.cos(angle), length * Math.sin(angle));
+    }
+
+    static scaleValue(v, s1, e1, s2, e2) {
+        return (v - s1) / (e1 - s1) * (e2 - s2) + s2;
     }
 }
 
-BDC.Color = class {
-    constructor(r = 0, g = 0, b = 0, a = 1) {
-        this.r = r;
-        this.g = arguments.length === 1 ? r : g;
-        this.b = arguments.length === 1 ? r : b;
-        this.a = a;
-    }
-
-    toString() {
-        return 'rgb(' + this.r + ', ' + this.g + ', ' + this.b + ', ' + this.a + ')';
-    }
-}
-
+// Event listeners
 BDC.KeyboardListener = class {
     constructor(object) {
         this.object = object;
@@ -226,5 +212,174 @@ BDC.MouseListener = class {
         const data = this.data;
         this.data = undefined;
         return data;
+    }
+}
+
+// Canvas
+BDC.Scene2 = class {
+    constructor(width, height, isAppendToBody = false) {
+        this.canvas = document.createElement('canvas');
+        this.context = this.canvas.getContext('2d');
+        this.width = 0;
+        this.height = 0;
+        this.setWidth(width);
+        this.setHeight(height);
+        this.context.scale(2, 2);
+        this.canvas.tabIndex = 1;
+
+        if (isAppendToBody) {
+            document.body.appendChild(this.canvas);
+        }
+    }
+
+    setWidth(width) {
+        this.width = width;
+        this.canvas.width = width * 2;
+        this.canvas.style.width = width + 'px';
+    }
+
+    setHeight(height) {
+        this.height = height;
+        this.canvas.height = height * 2;
+        this.canvas.style.height = height + 'px';
+    }
+
+    clearScene(color) {
+        if (typeof color === 'undefined') {
+            this.context.clearRect(0, 0, this.width, this.height);
+        }
+        else {
+            this.context.fillStyle = color;
+            this.context.fillRect(0, 0, this.width, this.height);
+        }
+    }
+}
+
+BDC.Color = class {
+    constructor(r = 0, g = 0, b = 0, a = 1) {
+        this.r = r;
+        this.g = arguments.length === 1 ? r : g;
+        this.b = arguments.length === 1 ? r : b;
+        this.a = a;
+    }
+
+    toString() {
+        return 'rgb(' + this.r + ', ' + this.g + ', ' + this.b + ', ' + this.a + ')';
+    }
+}
+
+// Objects
+BDC.Vector = class {
+    constructor(x, y) {
+        this.x = x || 0;
+        this.y = y || 0;
+    }
+
+    getLength() {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
+    }
+
+    getHeading() {
+        return Math.atan2(this.y, this.x);
+    }
+
+    normalize() {
+        const length = this.getLength();
+
+        if (length > 0) {
+            this.x = this.x / length;
+            this.y = this.y / length;
+        }
+
+        this.x = 0;
+        this.y = 0;
+    }
+
+    dot(p) {
+        return this.x * p.x + this.y * p.y;
+    }
+
+    static normalize(vector) {
+        const length = vector.length();
+
+        if (length > 0) {
+            return new BDC.Vector(vector.x / length, vector.y / length);
+        }
+
+        return new BDC.Vector();
+    }
+
+    static dot(a, b) {
+        return a.x * b.x + a.y * b.y;
+    }
+}
+
+BDC.Point = class {
+    constructor(x, y) {
+        this.x = x || 0;
+        this.y = y || 0;
+    }
+
+    getDistance(p) {
+        const xDiff = this.x - p.x;
+        const yDiff = this.y - p.y;
+
+        return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+    }
+
+    getDirection(p) {
+        const xDiff = this.x - p.x;
+        const yDiff = this.y - p.y;
+        const length = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+
+        if (length > 0) {
+            return new BDC.Vector(xDiff / length, yDiff / length);
+        }
+
+        return new BDC.Vector();
+    }
+}
+
+BDC.Line = class {
+    constructor(x1, y1, x2, y2) {
+        this.a = new BDC.Point(x1, y1);
+        this.b = new BDC.Point(x2, y2);
+    }
+
+    getLength() {
+        const xDiff = this.a.x - this.b.x;
+        const yDiff = this.a.y - this.b.y;
+
+        return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+    }
+}
+
+BDC.Rectangle = class {
+    constructor(x, y, width, height) {
+        this.position = new BDC.Point(x, y);
+        this.dimension = new BDC.Dimension(width, height);
+    }
+
+    getBounds() {
+        const bounds = {};
+
+        const p1 = new BDC.Point(this.position.x, this.position.y);
+        const p2 = new BDC.Point(this.position.x + this.dimension.width, this.position.y);
+        const p3 = new BDC.Point(this.position.x + this.dimension.width, this.position.y + this.dimension.height);
+        const p4 = new BDC.Point(this.position.x, this.position.y + this.dimension.height);
+
+        bounds.up = new BDC.Line(p1.x, p1.y, p2.x, p2.y);
+        bounds.right = new BDC.Line(p2.x, p2.y, p3.x, p3.y);
+        bounds.down = new BDC.Line(p3.x, p3.y, p4.x, p4.y);
+        bounds.left = new BDC.Line(p4.x, p4.y, p1.x, p1.y);
+
+        return bounds;
+    }
+}
+
+BDC.Dimension = class {
+    constructor(width, height) {
+        this.width = width || 0;
+        this.height = height || 0;
     }
 }
