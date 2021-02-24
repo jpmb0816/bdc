@@ -572,7 +572,6 @@ BDC.Button = class {
             if (BDC.isPointCollidedToRect(touches[i].position, this)) {
                 this.color.a = 0.5;
                 this.isTouchStart = true;
-
                 break;
             }
             else {
@@ -582,7 +581,7 @@ BDC.Button = class {
                     this.isTouchEnd = true
                     break;
                 }
-                else {
+                else if (this.isTouchEnd){
                     this.isTouchEnd = false;
                 }
             }
@@ -594,7 +593,7 @@ BDC.Button = class {
                 this.isTouchStart = false;
                 this.isTouchEnd = true;
             }
-            else {
+            else if (this.isTouchEnd){
                 this.isTouchEnd = false;
             }
         }
@@ -616,11 +615,6 @@ BDC.Button = class {
         scene.context.fillText(this.text, this.x + (this.width / 2), this.y + (this.height / 2));
 
         scene.context.restore();
-    }
-
-    setCoordinate(x, y) {
-        this.ox = x;
-        this.oy = y;
     }
 
     setXAlign(xAlign) {
