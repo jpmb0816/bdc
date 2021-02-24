@@ -64,69 +64,51 @@ class Main extends BDC {
         this.buttons.b = new BDC.Button('B', 0, 0, 50, 50, new BDC.Color(255, 0, 0));
         this.buttons.b.setXAlign('right');
         this.buttons.b.setYAlign('bottom');
-
-        // Listeners
-        this.buttons.fullscreen.addOnTouchEndListener(() => {
-            this.fullscreen();
-            // this.bgm.play();
-        });
-        this.buttons.mute.addOnTouchEndListener(() => {
-            console.log('mute');
-            // if (this.isSoundMuted) {
-            //     this.isSoundMuted = false;
-            //     this.buttons.mute.text = 'Mute';
-            //     this.bgm.play();
-            // }
-            // else {
-            //     this.isSoundMuted = true;
-            //     this.buttons.mute.text = 'Unmute';
-            //     this.bgm.pause();
-            // }
-        });
-
-        this.buttons.up.addOnTouchStartListener(() => {
-            this.index = 3;
-            char.isAnimating = true;
-        });
-        this.buttons.up.addOnTouchEndListener(() => {
-            char.stop();
-        });
-
-        this.buttons.down.addOnTouchStartListener(() => {
-            this.index = 0;
-            char.isAnimating = true;
-        });
-        this.buttons.down.addOnTouchEndListener(() => {
-            char.stop();
-        });
-
-        this.buttons.left.addOnTouchStartListener(() => {
-            this.index = 1;
-            char.isAnimating = true;
-        });
-        this.buttons.left.addOnTouchEndListener(() => {
-            char.stop();
-        });
-
-        this.buttons.right.addOnTouchStartListener(() => {
-            this.index = 2;
-            char.isAnimating = true;
-        });
-        this.buttons.right.addOnTouchEndListener(() => {
-            char.stop();
-        });
-
-        this.buttons.a.addOnTouchStartListener(() => {
-            console.log('A');
-        });
-        this.buttons.b.addOnTouchStartListener(() => {
-            console.log('B')
-        });
     }
 
     getInput(keyStates, touchStates) {
-        // const char = this.sprites['char'];
-        //
+        const char = this.sprites['char'];
+
+        if (this.buttons.fullscreen.isTouchEnd) {
+            this.fullscreen();
+        }
+
+        if (this.buttons.mute.isTouchEnd) {
+            alert('mute');
+        }
+
+        if (this.buttons.up.isTouchStart) {
+            this.index = 3;
+            char.isAnimating = true;
+        }
+        else if (this.buttons.up.isTouchEnd) {
+            char.stop();
+        }
+
+        if (this.buttons.down.isTouchStart) {
+            this.index = 0;
+            char.isAnimating = true;
+        }
+        else if (this.buttons.down.isTouchEnd) {
+            char.stop();
+        }
+
+        if (this.buttons.left.isTouchStart) {
+            this.index = 1;
+            char.isAnimating = true;
+        }
+        else if (this.buttons.left.isTouchEnd) {
+            char.stop();
+        }
+
+        if (this.buttons.right.isTouchStart) {
+            this.index = 2;
+            char.isAnimating = true;
+        }
+        else if (this.buttons.right.isTouchEnd) {
+            char.stop();
+        }
+
         // if (keyStates['KeyW']) {
         //     this.index = 3;
         //     char.isAnimating = true;

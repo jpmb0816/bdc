@@ -561,33 +561,8 @@ BDC.Button = class {
         this.xAlign = 'left';
         this.yAlign = 'top';
         this.isVisible = true;
-        this.isTouching = false;
-        this.onTouchStartFunction = undefined;
-        this.onTouchEndFunction = undefined;
-    }
-
-    addOnTouchStartListener(func) {
-        if (typeof this.onTouchStartFunction === 'undefined') {
-            this.onTouchStartFunction = func;
-        }
-    }
-
-    addOnTouchEndListener(func) {
-        if (typeof this.onTouchEndFunction === 'undefined') {
-            this.onTouchEndFunction = func;
-        }
-    }
-
-    removeOnTouchStartListener(func) {
-        if (typeof this.onTouchStartFunction !== 'undefined') {
-            this.onTouchStartFunction = undefined;
-        }
-    }
-
-    removeOnTouchEndListener(func) {
-        if (typeof this.onTouchEndFunction !== 'undefined') {
-            this.onTouchEndFunction = undefined;
-        }
+        this.isTouchStart = false;
+        this.isTouchEnd = false;
     }
 
     update(touches) {
@@ -596,32 +571,33 @@ BDC.Button = class {
         for (let i = 0; i < touches.length; i++) {
             if (BDC.isPointCollidedToRect(touches[i].position, this)) {
                 this.color.a = 0.5;
-                this.isTouching = true;
-
-                if (typeof this.onTouchStartFunction !== 'undefined') {
-                    this.onTouchStartFunction();
-                }
+                this.isTouchStart = true;
 
                 break;
             }
             else {
-                if (this.isTouching) {
+                if (this.isTouchStart) {
                     this.color.a = 1;
-                    this.isTouching = false;
-
-                    if (typeof this.onTouchEndFunction !== 'undefined') {
-                        this.onTouchEndFunction();
-                    }
+                    this.isTouchStart = false;
+                    this.isTouchEnd = true
+                    break;
+                }
+                else {
+                    this.isTouchEnd = false;
                 }
             }
         }
 
-        if (touches.length === 0 && this.isTouching) {
-            this.color.a = 1;
-            this.isTouching = false;
+        if (touches.length === 0) {
+            if (this.color.a !== 1) {
+                this.color.a = 1;
+            }
 
-            if (typeof this.onTouchEndFunction !== 'undefined') {
-                this.onTouchEndFunction();
+            if (this.isTouchStart) {
+                this.isTouchStart = false;
+            }
+            if (this.isTouchEnd) {
+                this.isTouchEnd = false;
             }
         }
     }
