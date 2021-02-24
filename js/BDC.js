@@ -16,7 +16,7 @@ class BDC {
         this.updateTime = 1000 / this.targetUPS;
         this.frameTime = 1000 / this.targetFPS;
         this.interval = undefined;
-        this.scene = new BDC.Scene2(320, 320, true);
+        this.scene = new BDC.Scene(320, 320, true);
         this.scene.canvas.focus();
 
         this.isResize = true;
@@ -293,7 +293,7 @@ class BDC {
 }
 
 // Canvas
-BDC.Scene2 = class {
+BDC.Scene = class {
     constructor(width, height, isAppendToBody = false) {
         this.canvas = document.createElement('canvas');
         this.context = this.canvas.getContext('2d');
@@ -432,6 +432,153 @@ BDC.Sprite = class {
     }
 }
 
+BDC.GameMap = class {
+    constructor(engine, columns, rows, cellWidth, cellHeight) {
+        this.engine = engine;
+        this.columns = columns;
+        this.rows = rows;
+        this.cellDimension = new BDC.Dimension(cellWidth, cellHeight);
+        this.entities = {};
+        this.backgroundScene = new BDC.Scene(columns * cellWidth, rows * cellHeight);
+
+        for (let row = 0; row < this.rows; row++) {
+            for (let column = 0; column < this.columns; column++) {
+                this.backgroundScene.context.drawImage(this.engine.images['grass'], 0, 0, this.cellDimension.width, this.cellDimension.height,
+                    column * this.cellDimension.width, row * this.cellDimension.height,
+                    this.cellDimension.width, this.cellDimension.height);
+            }
+        }
+    }
+
+    update() {
+        for (const [name, entity] of Object.entries(this.entities)) {
+            entity.update();
+        }
+    }
+
+    render(scene) {
+        scene.context.drawImage(this.backgroundScene.canvas, 0, 0);
+
+        for (const [name, entity] of Object.entries(this.entities)) {
+            entity.render(scene);
+        }
+    }
+
+    get width() {
+        return this.columns * this.cellDimension.width;
+    }
+
+    get height() {
+        return this.rows * this.cellDimension.height;
+    }
+}
+
+BDC.Entity = class {
+    constructor(engine, x, y, width, height) {
+        this.engine = engine;
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.vx = 0;
+        this.vy = 0;
+        this.speed = 2;
+
+        this.sprite = new BDC.Sprite(this.engine.images['char'], 4, 4, 64, 64);
+        this.sprite.addAnimation(0, 4);
+        this.sprite.addAnimation(4, 8);
+        this.sprite.addAnimation(8, 12);
+        this.sprite.addAnimation(12, 16);
+        this.animationIndex = 0;
+    }
+
+    move(dir) {
+        switch(dir) {
+            case 'up':
+                this.vy = -this.speed;
+                this.vx = 0;
+
+                this.animationIndex = 3;
+                this.sprite.isAnimating = true;
+                break;
+            case 'down':
+                this.vy = this.speed;
+                this.vx = 0;
+
+                this.animationIndex = 0;
+                this.sprite.isAnimating = true;
+                break;
+            case 'left':
+                this.vx = -this.speed;
+                this.vy = 0;
+
+                this.animationIndex = 1;
+                this.sprite.isAnimating = true;
+                break;
+            case 'right':
+                this.vx = this.speed;
+                this.vy = 0;
+
+                this.animationIndex = 2;
+                this.sprite.isAnimating = true;
+                break;
+            case 'stop':
+                this.vx = 0;
+                this.vy = 0;
+
+                this.sprite.stop();
+                break;
+        }
+    }
+
+    update() {
+        this.x = BDC.clamp(this.x + this.vx, 0, this.engine.gameMap.width - this.width);
+        this.y = BDC.clamp(this.y + this.vy, 0, this.engine.gameMap.height - this.height);
+
+        this.sprite.play(this.animationIndex);
+    }
+
+    render(scene) {
+        this.sprite.render(scene, this.x, this.y);
+    }
+}
+
+BDC.Camera = class {
+    constructor(scene, map) {
+        this.scene = scene;
+        this.map = map;
+        this.x = 0;
+        this.y = 0;
+        this.bindedTo = null;
+    }
+
+    // Update camera based on x and y
+    update() {
+        const entity = this.bindedTo;
+        const x = entity.x + entity.width / 2;
+        const y = entity.y + entity.height / 2;
+
+        // Camera x and y
+        const vx = -x + this.scene.width / 2;
+        const vy = -y + this.scene.height / 2;
+
+        // Clamping camera x and y so it prevents going out of map
+        this.x = BDC.clamp(vx, -(this.map.width - this.scene.width), 0);
+        this.y = BDC.clamp(vy, -(this.map.height - this.scene.height), 0);
+
+        // Translate canvas base on camera x and y
+        this.scene.context.translate(this.x, this.y);
+
+        // Update camera x and y and make it absolute value
+        this.x = Math.abs(this.x);
+        this.y = Math.abs(this.y);
+    }
+
+    stop() {
+        this.scene.context.setTransform(1, 0, 0, 1, 0, 0);
+    }
+}
+
 // Objects
 BDC.Vector = class {
     constructor(x, y) {
@@ -557,7 +704,8 @@ BDC.Button = class {
         this.oy = y;
         this.width = width;
         this.height = height;
-        this.color = color;
+        this.backgroundColor = color || new BDC.Color(230);
+        this.fontColor = new BDC.Color(0);
         this.xAlign = 'left';
         this.yAlign = 'top';
         this.isVisible = true;
@@ -570,13 +718,13 @@ BDC.Button = class {
 
         for (let i = 0; i < touches.length; i++) {
             if (BDC.isPointCollidedToRect(touches[i].position, this)) {
-                this.color.a = 0.5;
+                this.backgroundColor.a = 0.5;
                 this.isTouchStart = true;
                 break;
             }
             else {
                 if (this.isTouchStart) {
-                    this.color.a = 1;
+                    this.backgroundColor.a = 1;
                     this.isTouchStart = false;
                     this.isTouchEnd = true
                     break;
@@ -589,7 +737,7 @@ BDC.Button = class {
 
         if (touches.length === 0) {
             if (this.isTouchStart) {
-                this.color.a = 1;
+                this.backgroundColor.a = 1;
                 this.isTouchStart = false;
                 this.isTouchEnd = true;
             }
@@ -601,12 +749,13 @@ BDC.Button = class {
 
     render(scene) {
         if (!this.isVisible) return;
+
         scene.context.save();
 
-        scene.context.fillStyle = this.color.toString();
+        scene.context.fillStyle = this.backgroundColor.toString();
         scene.context.fillRect(this.x, this.y, this.width, this.height);
 
-        scene.context.fillStyle = 'white';
+        scene.context.fillStyle = this.fontColor.toString();
         scene.context.font = '15px sans-serif';
 
         scene.context.textAlign = "center";

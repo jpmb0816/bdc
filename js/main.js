@@ -3,9 +3,8 @@ class Main extends BDC {
         super();
         this.addKeyboardListener(this.scene.canvas);
         this.addTouchListener(this.scene.canvas);
+        this.images = {};
         this.spritesJSON = {};
-        this.sprites = {};
-        this.index = 0;
         this.buttons = {};
     }
 
@@ -23,7 +22,7 @@ class Main extends BDC {
             const path = sprite['sprite_path'];
 
             promises.push(BDC.loadSprite(path).then(image => {
-                this.sprites[name] = new BDC.Sprite(image, 4, 4, 64, 64);
+                this.images[name] = image;
             }));
         });
 
@@ -31,82 +30,59 @@ class Main extends BDC {
     }
 
     afterPreload() {
-        const char = this.sprites['char'];
+        this.player = new BDC.Entity(this, 128, 128, 64, 64);
 
-        char.addAnimation(0, 4);
-        char.addAnimation(4, 8);
-        char.addAnimation(8, 12);
-        char.addAnimation(12, 16);
+        this.gameMap = new BDC.GameMap(this, 20, 15, 64, 64);
+        this.gameMap.entities['player'] = this.player;
 
-        this.buttons.fullscreen = new BDC.Button('Fullscreen', 0, 0, 100, 50, new BDC.Color(255, 0, 0));
-        this.buttons.fullscreen.setXAlign('center');
-        this.buttons.fullscreen.setYAlign('center');
+        this.camera = new BDC.Camera(this.scene, this.gameMap);
+        this.camera.bindedTo = this.player;
 
-        this.buttons.mute = new BDC.Button('Mute', 0, 0, 70, 50, new BDC.Color(255, 0, 0));
-        this.buttons.mute.setXAlign('right');
+        const gap = 20;
 
-        this.buttons.up = new BDC.Button('U', 50, 100, 50, 50, new BDC.Color(255, 0, 0));
-        this.buttons.up.setYAlign('bottom');
+        this.buttons['fullscreen'] = new BDC.Button('Fullscreen', gap, gap, 100, 50);
+        this.buttons['fullscreen'].setXAlign('right');
 
-        this.buttons.down = new BDC.Button('D', 50, 0, 50, 50, new BDC.Color(255, 0, 0));
-        this.buttons.down.setYAlign('bottom');
+        this.buttons['up'] = new BDC.Button('U', 50 + gap, 100 + gap, 50, 50);
+        this.buttons['up'].setYAlign('bottom');
 
-        this.buttons.left = new BDC.Button('L', 0, 50, 50, 50, new BDC.Color(255, 0, 0));
-        this.buttons.left.setYAlign('bottom');
+        this.buttons['down'] = new BDC.Button('D', 50 + gap, gap, 50, 50);
+        this.buttons['down'].setYAlign('bottom');
 
-        this.buttons.right = new BDC.Button('R', 100, 50, 50, 50, new BDC.Color(255, 0, 0));
-        this.buttons.right.setYAlign('bottom');
+        this.buttons['left'] = new BDC.Button('L', gap, 50 + gap, 50, 50);
+        this.buttons['left'].setYAlign('bottom');
 
-        this.buttons.a = new BDC.Button('A', 50, 0, 50, 50, new BDC.Color(255, 0, 0));
-        this.buttons.a.setXAlign('right');
-        this.buttons.a.setYAlign('bottom');
+        this.buttons['right'] = new BDC.Button('R', 100 + gap, 50 + gap, 50, 50);
+        this.buttons['right'].setYAlign('bottom');
 
-        this.buttons.b = new BDC.Button('B', 0, 0, 50, 50, new BDC.Color(255, 0, 0));
-        this.buttons.b.setXAlign('right');
-        this.buttons.b.setYAlign('bottom');
+        this.buttons['a'] = new BDC.Button('A', 50 + gap * 2, 50 + gap, 50, 50);
+        this.buttons['a'].setXAlign('right');
+        this.buttons['a'].setYAlign('bottom');
+
+        this.buttons['b'] = new BDC.Button('B', gap, 50 + gap, 50, 50);
+        this.buttons['b'].setXAlign('right');
+        this.buttons['b'].setYAlign('bottom');
     }
 
     getInput(keyStates, touchStates) {
-        const char = this.sprites['char'];
-
-        if (this.buttons.fullscreen.isTouchEnd) {
+        if (this.buttons['fullscreen'].isTouchEnd) {
             this.fullscreen();
         }
 
-        if (this.buttons.mute.isTouchEnd) {
-            alert('mute');
+        if (this.buttons['up'].isTouchStart) {
+            this.player.move('up');
         }
-
-        if (this.buttons.up.isTouchStart) {
-            this.index = 3;
-            char.isAnimating = true;
+        else if (this.buttons['down'].isTouchStart) {
+            this.player.move('down');
         }
-        else if (this.buttons.up.isTouchEnd) {
-            char.stop();
+        else if (this.buttons['left'].isTouchStart) {
+            this.player.move('left');
         }
-
-        if (this.buttons.down.isTouchStart) {
-            this.index = 0;
-            char.isAnimating = true;
+        else if (this.buttons['right'].isTouchStart) {
+            this.player.move('right');
         }
-        else if (this.buttons.down.isTouchEnd) {
-            char.stop();
-        }
-
-        if (this.buttons.left.isTouchStart) {
-            this.index = 1;
-            char.isAnimating = true;
-        }
-        else if (this.buttons.left.isTouchEnd) {
-            char.stop();
-        }
-
-        if (this.buttons.right.isTouchStart) {
-            this.index = 2;
-            char.isAnimating = true;
-        }
-        else if (this.buttons.right.isTouchEnd) {
-            char.stop();
+        else {
+            this.player.move('stop');
         }
 
         // if (keyStates['KeyW']) {
@@ -132,34 +108,23 @@ class Main extends BDC {
 
     update(deltaTime) {
         super.update(deltaTime);
-        const char = this.sprites['char'];
-        const touches = this.touch.states;
-        char.play(this.index);
+        this.gameMap.update();
 
-        this.buttons.fullscreen.update(touches);
-        this.buttons.mute.update(touches);
-        this.buttons.up.update(touches);
-        this.buttons.down.update(touches);
-        this.buttons.left.update(touches);
-        this.buttons.right.update(touches);
-        this.buttons.a.update(touches);
-        this.buttons.b.update(touches);
+        for (const [name, button] of Object.entries(this.buttons)) {
+            button.update(this.touch.states);
+        }
     }
 
     render(scene) {
         scene.clearScene(new BDC.Color(50));
 
-        const char = this.sprites['char'];
-        char.render(scene, 100, 100);
+        this.camera.update();
+        this.gameMap.render(scene);
+        this.camera.stop();
 
-        this.buttons.fullscreen.render(scene);
-        this.buttons.mute.render(scene);
-        this.buttons.up.render(scene);
-        this.buttons.down.render(scene);
-        this.buttons.left.render(scene);
-        this.buttons.right.render(scene);
-        this.buttons.a.render(scene);
-        this.buttons.b.render(scene);
+        for (const [name, button] of Object.entries(this.buttons)) {
+            button.render(scene);
+        }
 
         for (let i = 0; i < this.touch.states.length; i++) {
             const touch = this.touch.states[i];
@@ -171,14 +136,9 @@ class Main extends BDC {
     }
 
     resizeScene(scene) {
-        this.buttons.fullscreen.reposition(scene);
-        this.buttons.mute.reposition(scene);
-        this.buttons.up.reposition(scene);
-        this.buttons.down.reposition(scene);
-        this.buttons.left.reposition(scene);
-        this.buttons.right.reposition(scene);
-        this.buttons.a.reposition(scene);
-        this.buttons.b.reposition(scene);
+        for (const [name, button] of Object.entries(this.buttons)) {
+            button.reposition(scene);
+        }
     }
 }
 

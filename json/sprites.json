@@ -1,6 +1,10 @@
 {
   "sprites": [
     {
+      "name": "grass",
+      "sprite_path": "img/grass.png"
+    },
+    {
       "name": "char",
       "sprite_path": "img/char.png"
     }
