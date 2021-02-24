@@ -48,11 +48,6 @@ class BDC {
 
     addTouchListener(object) {
         if (typeof this.touchStates.listeningTo === 'undefined') {
-            if (BDC.isMobile()) {
-                this.touchStates.data.push({ isActive: false, isDown: false, code: -1, x: -1, y: -1, tx: -1, ty: -1 });
-            }
-
-            this.touchStates.data.push({ isActive: false, isDown: false, code: -1, x: -1, y: -1, tx: -1, ty: -1 });
             this.touchStates.listeningTo = object;
             object.addEventListener(this.touchStates.eventTypes[0], this.touchEventListener.bind(this));
             object.addEventListener(this.touchStates.eventTypes[1], this.touchEventListener.bind(this));
@@ -61,57 +56,12 @@ class BDC {
     }
 
     touchEventListener(event) {
-        const rect = this.touchStates.listeningTo.getBoundingClientRect();
-        let x, y;
-
         if (BDC.isMobile()) {
-            for (let i = 0; i < event.touches.length; i++) {
-                if (i === 2) break;
-
-                const touch = this.touchStates.data[i];
-                touch.isActive = true;
-                touch.code = 0;
-
-                x = Math.round(event.touches[i].clientX - rect.left);
-                y = Math.round(event.touches[i].clientY - rect.top);
-
-                if (event.type === this.touchStates.eventTypes[2]) {
-                    touch.x = x;
-                    touch.y = y;
-                }
-                else {
-                    touch.tx = x;
-                    touch.ty = y;
-                    touch.isDown = (event.type === this.touchStates.eventTypes[0]);
-                }
-            }
-
-            const data = this.touchStates.data;
-
-            if (data[0]) {
-                data[0].isActive = false;
-            }
-            if (data[1]) {
-                data[1].isActive = false;
-            }
+            this.touchStates.data = event.touches;
         }
         else {
-            const touch = this.touchStates.data[0];
-            touch.isActive = true;
-            touch.code = 0;
-
-            x = Math.round(event.clientX - rect.left);
-            y = Math.round(event.clientY - rect.top);
-
-            if (event.type === this.touchStates.eventTypes[2]) {
-                touch.x = x;
-                touch.y = y;
-            }
-            else {
-                touch.tx = x;
-                touch.ty = y;
-                touch.isDown = (event.type === this.touchStates.eventTypes[0]);
-            }
+            this.touchStates.data = [];
+            this.touchStates.data.push(event);
         }
     }
 

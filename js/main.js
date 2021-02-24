@@ -2,7 +2,7 @@ class Main extends BDC {
     constructor() {
         super();
         this.addKeyboardListener(this.scene.canvas);
-        this.addTouchListener(this.scene.canvas, 1);
+        this.addTouchListener(this.scene.canvas);
         this.spritesJSON = {};
         this.sprites = new Map();
         this.index = 0;
@@ -60,10 +60,6 @@ class Main extends BDC {
         else {
             char.stop();
         }
-
-        if (touchStates.length > 0) {
-            console.log(touchStates[0]);
-        }
     }
 
     update() {
@@ -76,6 +72,21 @@ class Main extends BDC {
 
         const char = this.sprites.get('char');
         char.render(scene, 100, 100);
+
+        const data = this.touchStates.data;
+
+        if (data.length > 0) {
+            const rect = this.touchStates.listeningTo.getBoundingClientRect();
+
+            for (let i = 0; i < data.length; i++) {
+                const x = Math.round(data[i].clientX - rect.left);
+                const y = Math.round(data[i].clientY - rect.top);
+
+                scene.context.fillStyle = 'yellow';
+                scene.context.fillRect(x, y, 10, 10);
+            }
+
+        }
 
         this.renderStats(scene.context, new BDC.Color(255));
     }
