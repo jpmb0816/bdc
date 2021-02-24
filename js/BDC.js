@@ -604,9 +604,19 @@ BDC.Button = class {
 
                 break;
             }
+            else {
+                if (this.isTouching) {
+                    this.color.a = 1;
+                    this.isTouching = false;
+
+                    if (typeof this.onTouchEndFunction !== 'undefined') {
+                        this.onTouchEndFunction();
+                    }
+                }
+            }
         }
 
-        if (this.isTouching) {
+        if (touches.length === 0 && this.isTouching) {
             this.color.a = 1;
             this.isTouching = false;
 
