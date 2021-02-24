@@ -170,11 +170,6 @@ class Main extends BDC {
         const char = this.sprites['char'];
         char.render(scene, 100, 100);
 
-        this.touch.states.forEach(touch => {
-            scene.context.fillStyle = 'yellow';
-            scene.context.fillRect(touch.position.x, touch.position.y, 10, 10);
-        });
-
         this.buttons.fullscreen.render(scene);
         this.buttons.mute.render(scene);
         this.buttons.up.render(scene);
@@ -183,6 +178,11 @@ class Main extends BDC {
         this.buttons.right.render(scene);
         this.buttons.a.render(scene);
         this.buttons.b.render(scene);
+
+        this.touch.states.forEach(touch => {
+            scene.context.fillStyle = 'yellow';
+            scene.context.fillRect(touch.position.x, touch.position.y, 10, 10);
+        });
 
         this.renderStats(scene.context, new BDC.Color(255));
     }

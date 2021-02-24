@@ -77,12 +77,13 @@ class BDC {
         const rect = this.touch.listeningTo.getBoundingClientRect();
 
         if (BDC.isMobile()) {
-            event.touches.forEach(touch => {
+            for (let i = 0; i < event.touches.length; i++) {
+                const touch = event.touches[i];
                 const position = new BDC.Point();
                 position.x = Math.round(touch.clientX - rect.left);
                 position.y = Math.round(touch.clientY - rect.top);
                 touch.position = position;
-            });
+            }
 
             this.touch.states = event.touches;
         }
@@ -603,17 +604,14 @@ BDC.Button = class {
 
                 break;
             }
-            else {
-                if (this.isTouching) {
-                    this.color.a = 1;
-                    this.isTouching = false;
+        }
 
-                    if (typeof this.onTouchEndFunction !== 'undefined') {
-                        this.onTouchEndFunction();
-                    }
+        if (this.isTouching) {
+            this.color.a = 1;
+            this.isTouching = false;
 
-                    break;
-                }
+            if (typeof this.onTouchEndFunction !== 'undefined') {
+                this.onTouchEndFunction();
             }
         }
     }
