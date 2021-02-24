@@ -593,7 +593,7 @@ BDC.Button = class {
         if (!this.isVisible) return;
 
         for (let i = 0; i < touches.length; i++) {
-            if (BDC.isPointCollidedToRect(touches[i], this)) {
+            if (BDC.isPointCollidedToRect(touches[i].position, this)) {
                 this.color.a = 0.5;
                 this.isTouching = true;
 
