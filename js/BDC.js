@@ -17,14 +17,122 @@ class BDC {
         this.frameTime = 1000 / this.targetFPS;
         this.interval = undefined;
         this.scene = new BDC.Scene2(320, 320, true);
-        this.keyboard = new BDC.KeyboardListener(this.scene.canvas);
-        this.mouse = new BDC.MouseListener(this.scene.canvas);
         this.scene.canvas.focus();
+
+        this.keyStates = {
+            data: {},
+            listeningTo: undefined,
+            eventTypes: ['keydown', 'keyup']
+        };
+        this.touchStates = {
+            data: [],
+            listeningTo: undefined,
+            eventTypes: (BDC.isMobile() ? ['touchstart', 'touchend', 'touchmove'] : ['mousedown', 'mouseup', 'mousemove']),
+        };
+
+        this.isInitialized = false;
+        this.isPreloaded = false;
+    }
+
+    addKeyboardListener(object) {
+        if (typeof this.keyStates.listeningTo === 'undefined') {
+            this.keyStates.listeningTo = object;
+            this.scene.canvas.addEventListener(this.keyStates.eventTypes[0], this.keyEventLogger.bind(this));
+            this.scene.canvas.addEventListener(this.keyStates.eventTypes[1], this.keyEventLogger.bind(this));
+        }
+    }
+
+    keyEventLogger(event) {
+        this.keyStates.data[event.code] = (event.type === 'keydown');
+    }
+
+    addTouchListener(object) {
+        if (typeof this.touchStates.listeningTo === 'undefined') {
+            if (BDC.isMobile()) {
+                this.touchStates.data.push({ isActive: false, isDown: false, code: -1, x: -1, y: -1, tx: -1, ty: -1 });
+            }
+
+            this.touchStates.data.push({ isActive: false, isDown: false, code: -1, x: -1, y: -1, tx: -1, ty: -1 });
+            this.touchStates.listeningTo = object;
+            object.addEventListener(this.touchStates.eventTypes[0], this.touchEventListener.bind(this));
+            object.addEventListener(this.touchStates.eventTypes[1], this.touchEventListener.bind(this));
+            object.addEventListener(this.touchStates.eventTypes[2], this.touchEventListener.bind(this));
+        }
+    }
+
+    touchEventListener(event) {
+        const rect = this.touchStates.listeningTo.getBoundingClientRect();
+        let x, y;
+
+        if (BDC.isMobile()) {
+            for (let i = 0; i < event.touches.length; i++) {
+                if (i === 2) break;
+
+                const touch = this.touchStates.data[i];
+                touch.isActive = true;
+                touch.code = 0;
+
+                x = Math.round(event.touches[i].clientX - rect.left);
+                y = Math.round(event.touches[i].clientY - rect.top);
+
+                if (event.type === this.touchStates.eventTypes[2]) {
+                    touch.x = x;
+                    touch.y = y;
+                }
+                else {
+                    touch.tx = x;
+                    touch.ty = y;
+                    touch.isDown = (event.type === this.touchStates.eventTypes[0]);
+                }
+            }
+
+            const data = this.touchStates.data;
+
+            if (data[0]) {
+                data[0].isActive = false;
+            }
+            if (data[1]) {
+                data[1].isActive = false;
+            }
+        }
+        else {
+            const touch = this.touchStates.data[0];
+            touch.isActive = true;
+            touch.code = 0;
+
+            x = Math.round(event.clientX - rect.left);
+            y = Math.round(event.clientY - rect.top);
+
+            if (event.type === this.touchStates.eventTypes[2]) {
+                touch.x = x;
+                touch.y = y;
+            }
+            else {
+                touch.tx = x;
+                touch.ty = y;
+                touch.isDown = (event.type === this.touchStates.eventTypes[0]);
+            }
+        }
     }
 
     start() {
         if (!this.interval) {
-            this.interval = setInterval(() => this.tick(), 0);
+            if (this.isPreloaded) {
+                this.interval = setInterval(() => this.tick(), 0);
+            }
+            else {
+                this.isPreloaded = true;
+                this.preloadJSON([]).then(() => {
+                    this.preloadOther([]).then(() => {
+                        if (!this.isInitialized) {
+                            this.isInitialized = true;
+                            this.afterPreload();
+                        }
+
+                        this.interval = setInterval(() => this.tick(), 0)
+                    });
+                }).catch(error => console.error(error));
+            }
         }
     }
 
@@ -35,7 +143,19 @@ class BDC {
         }
     }
 
-    getInput(keyboard, mouse) {
+    preloadJSON(promises) {
+
+    }
+
+    preloadOther(promises) {
+
+    }
+
+    afterPreload() {
+
+    }
+
+    getInput(keyStates) {
 
     }
 
@@ -57,7 +177,7 @@ class BDC {
 
         // Update the game based on how many delta time passed
         while (this.totalUpdateDeltaTime > 0) {
-            this.getInput(this.keyboard.getData(), this.mouse.getData());
+            this.getInput(this.keyStates.data, this.touchStates.data);
             this.update(this.updateDeltaTime);
             this.totalUpdateDeltaTime--;
             this.updates++;
@@ -142,76 +262,29 @@ class BDC {
     static scaleValue(v, s1, e1, s2, e2) {
         return (v - s1) / (e1 - s1) * (e2 - s2) + s2;
     }
-}
 
-// Event listeners
-BDC.KeyboardListener = class {
-    constructor(object) {
-        this.object = object;
-        this.data = undefined;
-        this.eventType = ['keydown', 'keyup'];
-
-        this.object.addEventListener(this.eventType[0], this.eventLogger.bind(this));
-        this.object.addEventListener(this.eventType[1], this.eventLogger.bind(this));
+    static loadSprite(url) {
+        return new Promise(resolve => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.src = url;
+        });
     }
 
-    eventLogger(event) {
-        const data = {};
+    static loadJSON(url) {
+        return new Promise(resolve => {
+            const xmlHttp = new XMLHttpRequest();
 
-        data.type = event.type;
-        data.code = event.keyCode;
+            xmlHttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    const json = JSON.parse(this.responseText);
+                    resolve(json);
+                }
+            };
 
-        this.data = data;
-    }
-
-    getData() {
-        const data = this.data;
-        this.data = undefined;
-        return data;
-    }
-}
-
-BDC.MouseListener = class {
-    constructor(object) {
-        this.object = object;
-        this.data = undefined;
-        this.isMobile = BDC.isMobile();
-        this.eventType = this.isMobile ? ['touchstart', 'touchend', 'touchmove'] : ['mousedown', 'mouseup', 'mousemove'];
-
-        this.object.addEventListener(this.eventType[0], this.eventLogger.bind(this));
-        this.object.addEventListener(this.eventType[1], this.eventLogger.bind(this));
-        this.object.addEventListener(this.eventType[2], this.eventLogger.bind(this));
-    }
-
-    eventLogger(event) {
-        const rect = this.object.getBoundingClientRect();
-        const data = {};
-
-        data.type = event.type;
-        data.code = event.code;
-
-        if (this.isMobile) {
-            if (event.type === this.eventType[1]) {
-                data.x = Math.round(event.changedTouches[0].clientX - rect.left);
-                data.y = Math.round(event.changedTouches[0].clientY - rect.top);
-            }
-            else {
-                data.x = Math.round(event.touches[0].clientX - rect.left);
-                data.y = Math.round(event.touches[0].clientY - rect.top);
-            }
-        }
-        else {
-            data.x = Math.round(event.clientX - rect.left);
-            data.y = Math.round(event.clientY - rect.top);
-        }
-
-        this.data = data;
-    }
-
-    getData() {
-        const data = this.data;
-        this.data = undefined;
-        return data;
+            xmlHttp.open("GET", url, true);
+            xmlHttp.send();
+        });
     }
 }
 
@@ -265,6 +338,98 @@ BDC.Color = class {
 
     toString() {
         return 'rgb(' + this.r + ', ' + this.g + ', ' + this.b + ', ' + this.a + ')';
+    }
+}
+
+BDC.Sprite = class {
+    constructor(image, columns, rows, cellWidth, cellHeight) {
+        this.image = image;
+        this.columns = columns;
+        this.rows = rows;
+        this.cellDimension = new BDC.Dimension(cellWidth, cellHeight);
+
+        this.cellsPosition = [];
+        this.cellIndex = 0;
+        this.cellStartingIndex = 0;
+        this.cellEndingIndex = 0;
+
+        this.animationList = [];
+        this.animationIndex = 0;
+        this.currentAnimation = { startingIndex: 0, endingIndex: 0 };
+
+        this.delayCounter = 0;
+        this.delay = 16;
+
+        this.isAnimating = false;
+
+        for (let row = 0; row < this.rows; row++) {
+            for (let column = 0; column < this.columns; column++) {
+                this.cellsPosition.push(new BDC.Point(column * this.cellDimension.width, row * this.cellDimension.height));
+            }
+        }
+    }
+
+    play(index) {
+        if (!this.isAnimating) return;
+
+        if (this.animationIndex !== index) {
+            this.setAnimationIndex(index);
+        }
+
+        this.next();
+    }
+
+    pause() {
+        this.isAnimating = false;
+    }
+
+    stop() {
+        this.isAnimating = false;
+        this.animationIndex = -1;
+        this.cellIndex = this.currentAnimation.startingIndex;
+        this.delayCounter = 0;
+    }
+
+    setAnimationIndex(index) {
+        this.currentAnimation = this.animationList[index];
+        this.animationIndex = index;
+        this.cellIndex = this.currentAnimation.startingIndex + 1;
+        this.delayCounter = 0;
+    }
+
+    next() {
+        if (this.delayCounter < this.delay) {
+            this.delayCounter++;
+        }
+        else if (this.delayCounter >= this.delay) {
+            this.delayCounter = 0;
+            this.nextFrame();
+        }
+    }
+
+    nextFrame() {
+        this.cellIndex++;
+
+        if (this.cellIndex >= this.currentAnimation.endingIndex) {
+            this.cellIndex = this.currentAnimation.startingIndex;
+        }
+    }
+
+    render(scene, x, y, width, height) {
+        if (typeof width === 'undefined') {
+            width = this.cellDimension.width;
+        }
+
+        if (typeof height === 'undefined') {
+            height = this.cellDimension.height;
+        }
+
+        const cell = this.cellsPosition[this.cellIndex];
+        scene.context.drawImage(this.image, cell.x, cell.y, this.cellDimension.width, this.cellDimension.height, x, y, width, height);
+    }
+
+    addAnimation(startingIndex, endingIndex) {
+        this.animationList.push({ startingIndex: startingIndex, endingIndex: endingIndex })
     }
 }
 

@@ -2,13 +2,22 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="31387cbb-718e-4ae4-8014-c811611e52d8" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/img/char.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/js/BDC.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/BDC.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/main.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="package.json" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -23,7 +32,9 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="js.last.introduce.type" value="CONST" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="nodejs_package_manager_path" value="npm" />
     <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -34,7 +45,15 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1613454077946</updated>
-      <workItem from="1613454080991" duration="6140000" />
+      <workItem from="1613454080991" duration="6904000" />
+      <workItem from="1613819786120" duration="118000" />
+      <workItem from="1613819926861" duration="21000" />
+      <workItem from="1613899660895" duration="535000" />
+      <workItem from="1614015894453" duration="9614000" />
+      <workItem from="1614070695420" duration="817000" />
+      <workItem from="1614094514075" duration="1824000" />
+      <workItem from="1614096685166" duration="11991000" />
+      <workItem from="1614147854963" duration="17256000" />
     </task>
     <servers />
   </component>
