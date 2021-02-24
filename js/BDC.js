@@ -19,13 +19,20 @@ class BDC {
         this.scene = new BDC.Scene2(320, 320, true);
         this.scene.canvas.focus();
 
-        this.keyStates = {
-            data: {},
+        this.isResize = true;
+        this.isFullScreen = false;
+
+        window.addEventListener('resize', () => {
+            this.isResize = true;
+        });
+
+        this.key = {
+            states: {},
             listeningTo: undefined,
             eventTypes: ['keydown', 'keyup']
         };
-        this.touchStates = {
-            data: [],
+        this.touch = {
+            states: [],
             listeningTo: undefined,
             eventTypes: (BDC.isMobile() ? ['touchstart', 'touchend', 'touchmove'] : ['mousedown', 'mouseup', 'mousemove']),
         };
@@ -34,34 +41,57 @@ class BDC {
         this.isPreloaded = false;
     }
 
+    fullscreen() {
+        this.isFullScreen = true;
+
+        if (this.scene.canvas.webkitRequestFullScreen) {
+            this.scene.canvas.webkitRequestFullScreen();
+        }
+        else {
+            this.scene.canvas.mozRequestFullScreen();
+        }
+    }
+
     addKeyboardListener(object) {
-        if (typeof this.keyStates.listeningTo === 'undefined') {
-            this.keyStates.listeningTo = object;
-            this.scene.canvas.addEventListener(this.keyStates.eventTypes[0], this.keyEventLogger.bind(this));
-            this.scene.canvas.addEventListener(this.keyStates.eventTypes[1], this.keyEventLogger.bind(this));
+        if (typeof this.key.listeningTo === 'undefined') {
+            this.key.listeningTo = object;
+            this.scene.canvas.addEventListener(this.key.eventTypes[0], this.keyEventLogger.bind(this));
+            this.scene.canvas.addEventListener(this.key.eventTypes[1], this.keyEventLogger.bind(this));
+        }
+    }
+
+    addTouchListener(object) {
+        if (typeof this.touch.listeningTo === 'undefined') {
+            this.touch.listeningTo = object;
+            object.addEventListener(this.touch.eventTypes[0], this.touchEventListener.bind(this));
+            object.addEventListener(this.touch.eventTypes[1], this.touchEventListener.bind(this));
+            object.addEventListener(this.touch.eventTypes[2], this.touchEventListener.bind(this));
         }
     }
 
     keyEventLogger(event) {
-        this.keyStates.data[event.code] = (event.type === 'keydown');
-    }
-
-    addTouchListener(object) {
-        if (typeof this.touchStates.listeningTo === 'undefined') {
-            this.touchStates.listeningTo = object;
-            object.addEventListener(this.touchStates.eventTypes[0], this.touchEventListener.bind(this));
-            object.addEventListener(this.touchStates.eventTypes[1], this.touchEventListener.bind(this));
-            object.addEventListener(this.touchStates.eventTypes[2], this.touchEventListener.bind(this));
-        }
+        this.key.states[event.code] = (event.type === 'keydown');
     }
 
     touchEventListener(event) {
+        const rect = this.touch.listeningTo.getBoundingClientRect();
+
         if (BDC.isMobile()) {
-            this.touchStates.data = event.touches;
+            event.touches.forEach(touch => {
+                const position = new BDC.Point();
+                position.x = Math.round(touch.clientX - rect.left);
+                position.y = Math.round(touch.clientY - rect.top);
+                touch.position = position;
+            });
+
+            this.touch.states = event.touches;
         }
         else {
-            this.touchStates.data = [];
-            this.touchStates.data.push(event);
+            const position = new BDC.Point();
+            position.x = Math.round(event.clientX - rect.left);
+            position.y = Math.round(event.clientY - rect.top);
+            event.position = position;
+            this.touch.states = [event];
         }
     }
 
@@ -105,15 +135,30 @@ class BDC {
 
     }
 
-    getInput(keyStates) {
+    getInput(keyStates, touchStates) {
 
     }
 
     update(deltaTime) {
+        if (this.isResize) {
+            this.isResize = false;
+            this.scene.setWidth(window.innerWidth);
+            this.scene.setHeight(window.innerHeight);
 
+            this.resizeScene(this.scene);
+
+            if (document.fullscreenElement === null) {
+                this.isFullScreen = false;
+                // this.bgm.pause();
+            }
+        }
     }
 
     render(scene) {
+
+    }
+
+    resizeScene(scene) {
 
     }
 
@@ -127,7 +172,7 @@ class BDC {
 
         // Update the game based on how many delta time passed
         while (this.totalUpdateDeltaTime > 0) {
-            this.getInput(this.keyStates.data, this.touchStates.data);
+            this.getInput(this.key.states, this.touch.states);
             this.update(this.updateDeltaTime);
             this.totalUpdateDeltaTime--;
             this.updates++;
@@ -213,6 +258,14 @@ class BDC {
         return (v - s1) / (e1 - s1) * (e2 - s2) + s2;
     }
 
+    static isRectCollidedToRect(r1, r2) {
+        return r1.x < r2.x + r2.width && r1.x + r1.width > r2.x && r1.y < r2.y + r2.height && r1.y + r1.height > r2.y;
+    }
+
+    static isPointCollidedToRect(p, r) {
+        return p.x > r.x && p.x < r.x + r.width && p.y > r.y && p.y < r.y + r.height;
+    }
+
     static loadSprite(url) {
         return new Promise(resolve => {
             const image = new Image();
@@ -247,7 +300,6 @@ BDC.Scene2 = class {
         this.height = 0;
         this.setWidth(width);
         this.setHeight(height);
-        this.context.scale(2, 2);
         this.canvas.tabIndex = 1;
 
         if (isAppendToBody) {
@@ -257,14 +309,12 @@ BDC.Scene2 = class {
 
     setWidth(width) {
         this.width = width;
-        this.canvas.width = width * 2;
-        this.canvas.style.width = width + 'px';
+        this.canvas.width = width;
     }
 
     setHeight(height) {
         this.height = height;
-        this.canvas.height = height * 2;
-        this.canvas.style.height = height + 'px';
+        this.canvas.height = height;
     }
 
     clearScene(color) {
@@ -300,8 +350,6 @@ BDC.Sprite = class {
 
         this.cellsPosition = [];
         this.cellIndex = 0;
-        this.cellStartingIndex = 0;
-        this.cellEndingIndex = 0;
 
         this.animationList = [];
         this.animationIndex = 0;
@@ -496,5 +544,143 @@ BDC.Dimension = class {
     constructor(width, height) {
         this.width = width || 0;
         this.height = height || 0;
+    }
+}
+
+BDC.Button = class {
+    constructor(text, x, y, width, height, color) {
+        this.text = text;
+        this.x = x;
+        this.y = y;
+        this.ox = x;
+        this.oy = y;
+        this.width = width;
+        this.height = height;
+        this.color = color;
+        this.xAlign = 'left';
+        this.yAlign = 'top';
+        this.isVisible = true;
+        this.isTouching = false;
+        this.onTouchStartFunction = undefined;
+        this.onTouchEndFunction = undefined;
+    }
+
+    addOnTouchStartListener(func) {
+        if (typeof this.onTouchStartFunction === 'undefined') {
+            this.onTouchStartFunction = func;
+        }
+    }
+
+    addOnTouchEndListener(func) {
+        if (typeof this.onTouchEndFunction === 'undefined') {
+            this.onTouchEndFunction = func;
+        }
+    }
+
+    removeOnTouchStartListener(func) {
+        if (typeof this.onTouchStartFunction !== 'undefined') {
+            this.onTouchStartFunction = undefined;
+        }
+    }
+
+    removeOnTouchEndListener(func) {
+        if (typeof this.onTouchEndFunction !== 'undefined') {
+            this.onTouchEndFunction = undefined;
+        }
+    }
+
+    update(touches) {
+        if (!this.isVisible) return;
+
+        for (let i = 0; i < touches.length; i++) {
+            if (BDC.isPointCollidedToRect(touches[i], this)) {
+                this.color.a = 0.5;
+                this.isTouching = true;
+
+                if (typeof this.onTouchStartFunction !== 'undefined') {
+                    this.onTouchStartFunction();
+                }
+
+                break;
+            }
+            else {
+                if (this.isTouching) {
+                    this.color.a = 1;
+                    this.isTouching = false;
+
+                    if (typeof this.onTouchEndFunction !== 'undefined') {
+                        this.onTouchEndFunction();
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+
+    render(scene) {
+        if (!this.isVisible) return;
+        scene.context.save();
+
+        scene.context.fillStyle = this.color.toString();
+        scene.context.fillRect(this.x, this.y, this.width, this.height);
+
+        scene.context.fillStyle = 'white';
+        scene.context.font = '15px sans-serif';
+
+        scene.context.textAlign = "center";
+        scene.context.textBaseline = 'middle';
+
+        scene.context.fillText(this.text, this.x + (this.width / 2), this.y + (this.height / 2));
+
+        scene.context.restore();
+    }
+
+    setCoordinate(x, y) {
+        this.ox = x;
+        this.oy = y;
+    }
+
+    setXAlign(xAlign) {
+        if (xAlign === 'left' || xAlign === 'center' || xAlign === 'right') {
+            this.xAlign = xAlign.toLowerCase();
+        }
+        else {
+            this.xAlign = 'left';
+        }
+    }
+
+    setYAlign(yAlign) {
+        if (yAlign === 'top' || yAlign === 'center' || yAlign === 'bottom') {
+            this.yAlign = yAlign.toLowerCase();
+        }
+        else {
+            this.yAlign = 'top';
+        }
+    }
+
+    reposition(scene) {
+        const width = scene.width;
+        const height = scene.height;
+
+        if (this.xAlign === 'left') {
+            this.x = this.ox;
+        }
+        else if (this.xAlign === 'center') {
+            this.x = (width / 2) - (this.width / 2) + this.ox;
+        }
+        else if (this.xAlign === 'right') {
+            this.x = width - this.width - this.ox;
+        }
+
+        if (this.xAlign === 'top') {
+            this.y = this.oy;
+        }
+        else if (this.yAlign === 'center') {
+            this.y = (height / 2) - (this.height / 2) + this.oy;
+        }
+        else if (this.yAlign === 'bottom') {
+            this.y = height - this.height - this.oy;
+        }
     }
 }
