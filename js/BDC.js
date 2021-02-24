@@ -589,14 +589,12 @@ BDC.Button = class {
         }
 
         if (touches.length === 0) {
-            if (this.color.a !== 1) {
-                this.color.a = 1;
-            }
-
             if (this.isTouchStart) {
+                this.color.a = 1;
                 this.isTouchStart = false;
+                this.isTouchEnd = true;
             }
-            if (this.isTouchEnd) {
+            else {
                 this.isTouchEnd = false;
             }
         }
