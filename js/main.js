@@ -85,7 +85,6 @@ class Main extends BDC {
                 scene.context.fillStyle = 'yellow';
                 scene.context.fillRect(x, y, 10, 10);
             }
-
         }
 
         this.renderStats(scene.context, new BDC.Color(255));
