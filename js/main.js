@@ -179,10 +179,11 @@ class Main extends BDC {
         this.buttons.a.render(scene);
         this.buttons.b.render(scene);
 
-        this.touch.states.forEach(touch => {
+        for (let i = 0; i < this.touch.states.length; i++) {
+            const touch = this.touch.states[i];
             scene.context.fillStyle = 'yellow';
             scene.context.fillRect(touch.position.x, touch.position.y, 10, 10);
-        });
+        }
 
         this.renderStats(scene.context, new BDC.Color(255));
     }
