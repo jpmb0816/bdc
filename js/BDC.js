@@ -206,13 +206,15 @@ class BDC {
         this.updateTime = 1000 / this.targetUPS;
     }
 
-    renderStats(context, color) {
-        context.fillStyle = color;
-        context.font = '15px sans-serif';
-        context.textAlign = 'left';
-        context.textBaseline = 'top';
-        context.fillText('UPS: ' + this.UPS, 20, 20);
-        context.fillText('FPS: ' + this.FPS, 20, 40);
+    renderStats(scene, color) {
+        scene.context.save();
+        scene.context.fillStyle = color;
+        scene.context.font = '15px sans-serif';
+        scene.context.textAlign = 'left';
+        scene.context.textBaseline = 'top';
+        scene.context.fillText('UPS: ' + this.UPS, 20, 20);
+        scene.context.fillText('FPS: ' + this.FPS, 20, 40);
+        scene.context.restore();
     }
 
     static getCurrentTimeMillis() {
@@ -357,7 +359,7 @@ BDC.Sprite = class {
         this.currentAnimation = { startingIndex: 0, endingIndex: 0 };
 
         this.delayCounter = 0;
-        this.delay = 16;
+        this.delay = 10;
 
         this.isAnimating = false;
 
@@ -405,7 +407,7 @@ BDC.Sprite = class {
     setAnimationIndex(index) {
         this.currentAnimation = this.animationList[index];
         this.animationIndex = index;
-        this.cellIndex = this.currentAnimation.startingIndex + 1;
+        this.cellIndex = this.currentAnimation.startingIndex;
         this.delayCounter = 0;
     }
 
@@ -552,8 +554,8 @@ BDC.Camera = class {
     // Update camera based on x and y
     update() {
         const entity = this.bindedTo;
-        const x = entity.x + entity.width / 2;
-        const y = entity.y + entity.height / 2;
+        const x = entity.position.x + entity.width / 2;
+        const y = entity.position.y + entity.height / 2;
 
         // Camera x and y
         const vx = -x + this.scene.width / 2;

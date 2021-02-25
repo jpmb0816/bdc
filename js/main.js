@@ -98,23 +98,19 @@ class Main extends BDC {
         }
 
         // if (keyStates['KeyW']) {
-        //     this.index = 3;
-        //     char.isAnimating = true;
+        //     this.player.move('up');
         // }
         // else if (keyStates['KeyS']) {
-        //     this.index = 0;
-        //     char.isAnimating = true;
+        //     this.player.move('down');
         // }
         // else if (keyStates['KeyA']) {
-        //     this.index = 1;
-        //     char.isAnimating = true;
+        //     this.player.move('left');
         // }
         // else if (keyStates['KeyD']) {
-        //     this.index = 2;
-        //     char.isAnimating = true;
+        //     this.player.move('right');
         // }
         // else {
-        //     char.stop();
+        //     this.player.move('stop');
         // }
     }
 
@@ -144,7 +140,13 @@ class Main extends BDC {
             scene.context.fillRect(touch.position.x, touch.position.y, 10, 10);
         }
 
-        this.renderStats(scene.context, new BDC.Color(255));
+        scene.context.fillStyle = 'white';
+        scene.context.font = '15px sans-serif';
+        scene.context.textAlign = 'left';
+        scene.context.textBaseline = 'top';
+        scene.context.fillText('X: ' + this.player.position.x, 20, 60);
+        scene.context.fillText('Y: ' + this.player.position.y, 20, 80);
+        this.renderStats(scene, new BDC.Color(255));
     }
 
     resizeScene(scene) {
