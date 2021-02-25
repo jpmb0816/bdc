@@ -77,18 +77,22 @@ class BDC {
         const rect = this.touch.listeningTo.getBoundingClientRect();
 
         if (BDC.isMobile()) {
-            const touches = [];
+            // const touches = [];
+            //
+            // for (let i = 0; i < event.touches.length; i++) {
+            //     const touch = event.touches[i];
+            //     const position = new BDC.Point();
+            //     position.x = Math.round(touch.clientX - rect.left);
+            //     position.y = Math.round(touch.clientY - rect.top);
+            //     //touch.position = position;
+            //     touches.push({ position: position });
+            // }
+            const touch = event.touches[0];
+            const position = new BDC.Point();
+            position.x = Math.round(touch.clientX - rect.left);
+            position.y = Math.round(touch.clientY - rect.top);
 
-            for (let i = 0; i < event.touches.length; i++) {
-                const touch = event.touches[i];
-                const position = new BDC.Point();
-                position.x = Math.round(touch.clientX - rect.left);
-                position.y = Math.round(touch.clientY - rect.top);
-                //touch.position = position;
-                touches.push({ position: position });
-            }
-
-            this.touch.states = touches;
+            this.touch.states = [{ position: position }];
         }
         else {
             const position = new BDC.Point();
