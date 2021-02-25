@@ -87,10 +87,14 @@ class BDC {
             //     //touch.position = position;
             //     touches.push({ position: position });
             // }
-            const touch = event.touches[0];
-            const position = new BDC.Point();
-            position.x = Math.round(touch.clientX - rect.left);
-            position.y = Math.round(touch.clientY - rect.top);
+            const position = new BDC.Point(-1, -1);
+
+            if (event.touches > 0) {
+                const touch = event.touches[0];
+
+                position.x = Math.round(touch.clientX - rect.left);
+                position.y = Math.round(touch.clientY - rect.top);
+            }
 
             this.touch.states = [{ position: position }];
         }
