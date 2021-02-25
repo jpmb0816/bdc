@@ -72,16 +72,28 @@ class Main extends BDC {
         if (this.buttons['up'].isTouchStart) {
             this.player.move('up');
         }
-        else if (this.buttons['down'].isTouchStart) {
+        else if (this.buttons['up'].isTouchEnd) {
+            this.player.move('stop');
+        }
+
+        if (this.buttons['down'].isTouchStart) {
             this.player.move('down');
         }
-        else if (this.buttons['left'].isTouchStart) {
+        else if (this.buttons['down'].isTouchEnd) {
+            this.player.move('stop');
+        }
+
+        if (this.buttons['left'].isTouchStart) {
             this.player.move('left');
         }
-        else if (this.buttons['right'].isTouchStart) {
+        else if (this.buttons['left'].isTouchEnd) {
+            this.player.move('stop');
+        }
+
+        if (this.buttons['right'].isTouchStart) {
             this.player.move('right');
         }
-        else {
+        else if (this.buttons['right'].isTouchEnd) {
             this.player.move('stop');
         }
 

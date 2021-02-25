@@ -368,7 +368,7 @@ BDC.Sprite = class {
         }
     }
 
-    play(index) {
+    update(index) {
         if (!this.isAnimating) return;
 
         if (this.animationIndex !== index) {
@@ -376,6 +376,19 @@ BDC.Sprite = class {
         }
 
         this.next();
+    }
+
+    render(scene, x, y, width, height) {
+        if (typeof width === 'undefined') {
+            width = this.cellDimension.width;
+        }
+
+        if (typeof height === 'undefined') {
+            height = this.cellDimension.height;
+        }
+
+        const cell = this.cellsPosition[this.cellIndex];
+        scene.context.drawImage(this.image, cell.x, cell.y, this.cellDimension.width, this.cellDimension.height, x, y, width, height);
     }
 
     pause() {
@@ -412,19 +425,6 @@ BDC.Sprite = class {
         if (this.cellIndex >= this.currentAnimation.endingIndex) {
             this.cellIndex = this.currentAnimation.startingIndex;
         }
-    }
-
-    render(scene, x, y, width, height) {
-        if (typeof width === 'undefined') {
-            width = this.cellDimension.width;
-        }
-
-        if (typeof height === 'undefined') {
-            height = this.cellDimension.height;
-        }
-
-        const cell = this.cellsPosition[this.cellIndex];
-        scene.context.drawImage(this.image, cell.x, cell.y, this.cellDimension.width, this.cellDimension.height, x, y, width, height);
     }
 
     addAnimation(startingIndex, endingIndex) {
@@ -476,12 +476,10 @@ BDC.GameMap = class {
 BDC.Entity = class {
     constructor(engine, x, y, width, height) {
         this.engine = engine;
-        this.x = x;
-        this.y = y;
+        this.position = new BDC.Point(x, y);
         this.width = width;
         this.height = height;
-        this.vx = 0;
-        this.vy = 0;
+        this.velocity = new BDC.Vector();
         this.speed = 2;
 
         this.sprite = new BDC.Sprite(this.engine.images['char'], 4, 4, 64, 64);
@@ -495,36 +493,36 @@ BDC.Entity = class {
     move(dir) {
         switch(dir) {
             case 'up':
-                this.vy = -this.speed;
-                this.vx = 0;
+                this.velocity.x = 0;
+                this.velocity.y = -this.speed;
 
                 this.animationIndex = 3;
                 this.sprite.isAnimating = true;
                 break;
             case 'down':
-                this.vy = this.speed;
-                this.vx = 0;
+                this.velocity.x = 0;
+                this.velocity.y = this.speed;
 
                 this.animationIndex = 0;
                 this.sprite.isAnimating = true;
                 break;
             case 'left':
-                this.vx = -this.speed;
-                this.vy = 0;
+                this.velocity.x = -this.speed;
+                this.velocity.y = 0;
 
                 this.animationIndex = 1;
                 this.sprite.isAnimating = true;
                 break;
             case 'right':
-                this.vx = this.speed;
-                this.vy = 0;
+                this.velocity.x = this.speed;
+                this.velocity.y = 0;
 
                 this.animationIndex = 2;
                 this.sprite.isAnimating = true;
                 break;
             case 'stop':
-                this.vx = 0;
-                this.vy = 0;
+                this.velocity.x = 0;
+                this.velocity.y = 0;
 
                 this.sprite.stop();
                 break;
@@ -532,14 +530,13 @@ BDC.Entity = class {
     }
 
     update() {
-        this.x = BDC.clamp(this.x + this.vx, 0, this.engine.gameMap.width - this.width);
-        this.y = BDC.clamp(this.y + this.vy, 0, this.engine.gameMap.height - this.height);
-
-        this.sprite.play(this.animationIndex);
+        this.position.x = BDC.clamp(this.position.x + this.velocity.x, 0, this.engine.gameMap.width - this.width);
+        this.position.y = BDC.clamp(this.position.y + this.velocity.y, 0, this.engine.gameMap.height - this.height);
+        this.sprite.update(this.animationIndex);
     }
 
     render(scene) {
-        this.sprite.render(scene, this.x, this.y);
+        this.sprite.render(scene, this.position.x, this.position.y);
     }
 }
 
