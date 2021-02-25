@@ -1,8 +1,8 @@
 class Main extends BDC {
     constructor() {
         super();
-        this.addKeyboardListener(this.scene.canvas);
-        this.addTouchListener(this.scene.canvas);
+        this.addKeyboardListener();
+        this.addTouchListener();
         this.images = {};
         this.spritesJSON = {};
         this.buttons = {};

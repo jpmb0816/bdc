@@ -17,7 +17,6 @@ class BDC {
         this.frameTime = 1000 / this.targetFPS;
         this.interval = undefined;
         this.scene = new BDC.Scene(320, 320, true);
-        this.scene.canvas.focus();
 
         this.isResize = true;
         this.isFullScreen = false;
@@ -52,20 +51,18 @@ class BDC {
         }
     }
 
-    addKeyboardListener(object) {
+    addKeyboardListener() {
         if (typeof this.key.listeningTo === 'undefined') {
-            this.key.listeningTo = object;
-            this.scene.canvas.addEventListener(this.key.eventTypes[0], this.keyEventLogger.bind(this));
-            this.scene.canvas.addEventListener(this.key.eventTypes[1], this.keyEventLogger.bind(this));
+            window.addEventListener(this.key.eventTypes[0], this.keyEventLogger.bind(this));
+            window.addEventListener(this.key.eventTypes[1], this.keyEventLogger.bind(this));
         }
     }
 
     addTouchListener(object) {
         if (typeof this.touch.listeningTo === 'undefined') {
-            this.touch.listeningTo = object;
-            object.addEventListener(this.touch.eventTypes[0], this.touchEventListener.bind(this));
-            object.addEventListener(this.touch.eventTypes[1], this.touchEventListener.bind(this));
-            object.addEventListener(this.touch.eventTypes[2], this.touchEventListener.bind(this));
+            window.addEventListener(this.touch.eventTypes[0], this.touchEventListener.bind(this));
+            window.addEventListener(this.touch.eventTypes[1], this.touchEventListener.bind(this));
+            window.addEventListener(this.touch.eventTypes[2], this.touchEventListener.bind(this));
         }
     }
 
@@ -74,36 +71,25 @@ class BDC {
     }
 
     touchEventListener(event) {
-        const rect = this.touch.listeningTo.getBoundingClientRect();
+        const rect = this.scene.canvas.getBoundingClientRect();
 
         if (BDC.isMobile()) {
-            // const touches = [];
-            //
-            // for (let i = 0; i < event.touches.length; i++) {
-            //     const touch = event.touches[i];
-            //     const position = new BDC.Point();
-            //     position.x = Math.round(touch.clientX - rect.left);
-            //     position.y = Math.round(touch.clientY - rect.top);
-            //     //touch.position = position;
-            //     touches.push({ position: position });
-            // }
-            const position = new BDC.Point(-1, -1);
-
-            if (event.touches > 0) {
-                const touch = event.touches[0];
-
+            for (let i = 0; i < event.touches.length; i++) {
+                const touch = event.touches[i];
+                const position = new BDC.Point();
                 position.x = Math.round(touch.clientX - rect.left);
                 position.y = Math.round(touch.clientY - rect.top);
+                touch.position = position;
             }
 
-            this.touch.states = [{ position: position }];
+            this.touch.states = event.touches;
         }
         else {
             const position = new BDC.Point();
             position.x = Math.round(event.clientX - rect.left);
             position.y = Math.round(event.clientY - rect.top);
-            //event.position = position;
-            this.touch.states = [{ position: position }];
+            event.position = position;
+            this.touch.states = [event];
         }
     }
 
